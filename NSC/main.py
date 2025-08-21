@@ -15,28 +15,27 @@ class NSCDataPushTool:
         self.root = root
         self.root.title("Doflamingo")
         self.root.geometry("900x700")
-        
-        # Authentication variables
+
         self.logged_in = False
         self.token = ""
         
-        # Data variables
+
         self.df = None
         self.process_status = None
         self.failed_records = None
         
-        # Create login frame
+
         self.create_login_frame()
         
     def create_login_frame(self):
         """Create the login interface matching the provided design"""
         self.clear_frame()
         
-        # Main container with blue background
+
         self.login_frame = tk.Frame(self.root, bg="#0078D7")
         self.login_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Header
+
         header_frame = tk.Frame(self.login_frame, bg="#0078D7")
         header_frame.pack(pady=(50, 20))
         
@@ -46,26 +45,26 @@ class NSCDataPushTool:
                 fg="white", 
                 bg="#0078D7").pack()
         
-        # Login box
+
         login_box = tk.Frame(self.login_frame, bg="white", padx=20, pady=20)
         login_box.pack(pady=20, ipadx=20, ipady=20)
         
-        # Login title
+
         tk.Label(login_box, 
                 text="LOGIN", 
                 font=('Arial', 14, 'bold'), 
                 bg="white").pack(pady=(0, 20))
         
-        # Maintained/Inverter section
+
         maintained_frame = tk.Frame(login_box, bg="white")
         maintained_frame.pack(fill=tk.X, pady=5)
         
         
-        # Entry fields
+
         entry_frame = tk.Frame(login_box, bg="white")
         entry_frame.pack(fill=tk.X, pady=10)
         
-        # Username and password fields
+
         tk.Label(entry_frame, 
                 text="Username:", 
                 font=('Arial', 10), 
@@ -88,8 +87,7 @@ class NSCDataPushTool:
                                      relief=tk.GROOVE, 
                                      bd=2)
         self.password_entry.pack(fill=tk.X, pady=5)
-        
-        # Login button
+
         login_btn = tk.Button(login_box, 
                              text="LOGIN", 
                              command=self.authenticate, 
@@ -102,11 +100,11 @@ class NSCDataPushTool:
                              pady=5)
         login_btn.pack(pady=(20, 10))
         
-        # Footer links
+
         footer_frame = tk.Frame(login_box, bg="white")
         footer_frame.pack()
         
-        # Version info at bottom of window
+
         version_frame = tk.Frame(self.login_frame, bg="#0078D7")
         version_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=10)
         
@@ -120,11 +118,11 @@ class NSCDataPushTool:
         """Create the main application interface"""
         self.clear_frame()
         
-        # Main container
+
         self.main_frame = tk.Frame(self.root)
         self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Token section
+
         token_frame = tk.LabelFrame(self.main_frame, text="Token Management", padx=10, pady=10)
         token_frame.pack(fill=tk.X, pady=10)
         
@@ -134,8 +132,7 @@ class NSCDataPushTool:
         token_btn = tk.Button(token_frame, text="Generate Token", command=self.generate_token,
                              font=('Arial', 10), bg='#2196F3', fg='white')
         token_btn.pack(side=tk.RIGHT, padx=10)
-        
-        # File selection section
+
         file_frame = tk.LabelFrame(self.main_frame, text="Excel File Selection", padx=10, pady=10)
         file_frame.pack(fill=tk.X, pady=10)
         
@@ -147,7 +144,7 @@ class NSCDataPushTool:
                               font=('Arial', 10), bg='#607D8B', fg='white')
         browse_btn.pack(side=tk.RIGHT, padx=10)
         
-        # Process controls
+
         control_frame = tk.Frame(self.main_frame)
         control_frame.pack(fill=tk.X, pady=10)
         
@@ -163,7 +160,7 @@ class NSCDataPushTool:
                               font=('Arial', 12), bg='#673AB7', fg='white')
         export_btn.pack(side=tk.RIGHT, padx=10)
         
-        # Logs section
+
         log_frame = tk.LabelFrame(self.main_frame, text="Process Logs", padx=10, pady=10)
         log_frame.pack(fill=tk.BOTH, expand=True, pady=10)
         
@@ -175,7 +172,7 @@ class NSCDataPushTool:
         self.log_text.config(yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.log_text.yview)
         
-        # Status bar
+
         self.status_var = tk.StringVar()
         self.status_var.set("2025 Doflamingo @V-1.0.0.0")
         status_bar = tk.Label(self.main_frame, textvariable=self.status_var, bd=1, relief=tk.SUNKEN, anchor=tk.W)
@@ -212,10 +209,10 @@ class NSCDataPushTool:
             if response.status_code == 200:
                 response_data = response.json()
                 
-                # Debug print to see actual response structure
+
                 print("API Response:", response_data)
                 
-                # Handle both list and dict responses
+
                 if isinstance(response_data, list):
                     if response_data and isinstance(response_data[0], dict):
                         self.token = response_data[0].get("token", "")
@@ -339,7 +336,7 @@ class NSCDataPushTool:
                 df1.loc[ii,'ptRationMainMeter'] = ""
                 df1.loc[ii,'amperage'] = ""
 
-            # Store processed data
+
             with shelve.open("Data_Selve") as shfile:
                 shfile['NSC_API_Data'] = df1
             
@@ -357,7 +354,7 @@ class NSCDataPushTool:
             return
             
         try:
-            # Load processed data
+
             with shelve.open("Data_Selve") as shfile:
                 df1 = shfile['NSC_API_Data']
             
@@ -388,15 +385,15 @@ class NSCDataPushTool:
                 df2.reset_index(drop=True, inplace=True)
                 FName = f'output_{currDate}_{lot+1}.json'
                 
-                # Convert DataFrame to JSON
+
                 records = df2.to_dict(orient='records')
                 json_data = json.dumps(records)
                 
-                # Save JSON to a file
+
                 with open(FName, 'w') as f:
                     f.write(json_data)
                 
-                # Push to API
+
                 self.push_lot_to_api(json_data, lot)
                 
                 time.sleep(5)  # Add delay between lots
@@ -438,16 +435,15 @@ class NSCDataPushTool:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Debug: Print the actual response structure
+
                 print("API Response:", data)
                 
-                # Initialize counters for this lot
+
                 total = 0
                 success = 0
                 failure = 0
                 
                 if isinstance(data, list):
-                    # Process each item in the list response
                     for item in data:
                         if isinstance(item, dict):
                             if item.get('Status', '').lower() == 'success':
@@ -469,18 +465,16 @@ class NSCDataPushTool:
                                     pd.DataFrame([failed_record])
                                 ], ignore_index=True)
                 elif isinstance(data, dict):
-                    # Handle single dictionary response
                     if data.get('Status', '').lower() == 'success':
                         success += 1
                     else:
                         failure += 1
                     total += 1
                     
-                    # Record failed data if any
                     if data.get('Status', '').lower() != 'success':
                         failed_record = {
                             'applicationId': data.get('ApplicationId', ''),
-                            'assignedConsumerNumber': '',  # You may need to map this
+                            'assignedConsumerNumber': '',  
                             'status': data.get('Status', ''),
                             'description': data.get('DESCRIPTION', '')
                         }
@@ -489,7 +483,6 @@ class NSCDataPushTool:
                             pd.DataFrame([failed_record])
                         ], ignore_index=True)
                 
-                # Update process status
                 self.process_status.loc[lot_number] = [
                     lot_number+1,
                     total,
@@ -518,25 +511,21 @@ class NSCDataPushTool:
             return
             
         try:
-            # Load original data to map with failed records
             with shelve.open("Data_Selve") as shfile:
                 processed_data = shfile['NSC_API_Data']
             
-            # Create result DataFrame
             result_df = pd.DataFrame({
                 'CONSUMER_NUMBER': processed_data['assignedConsumerNumber'],
                 'METER_NUMBER': processed_data['meterSerialNumber'],
                 'APPLICATION_ID': processed_data['applicationId'],
-                'status': 'Success'  # Default to success
+                'status': 'Success' 
             })
             
-            # Update status for failed records
             if not self.failed_records.empty:
                 for _, row in self.failed_records.iterrows():
                     mask = result_df['APPLICATION_ID'] == row['applicationId']
                     result_df.loc[mask, 'status'] = row['status']
             
-            # Save to Excel
             filename = f"NSC_Push_Results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
             result_df.to_excel(filename, index=False)
             
@@ -561,7 +550,7 @@ class NSCDataPushTool:
         self.log_text.see(tk.END)
         self.root.update()
 
-# Run the application
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = NSCDataPushTool(root)

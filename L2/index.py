@@ -58,7 +58,6 @@ def pushDataToL2API(payload, request_id):
     # API URL
     url = "API_URL"
     
-    # Create Basic Auth header
     credentials = f"{username}:{password}"
     encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
     headers = {
@@ -89,7 +88,6 @@ def main():
         print("No Excel files found in the directory.")
         return
     
-    # Use the first Excel file found
     excel_file = excel_files[0]
     print(f"Loading data from: {excel_file}")
     
@@ -110,27 +108,23 @@ def main():
         'kno': 'Consumer_Number'
     }
     
-    # Check if all required columns exist in the Excel
     missing_columns = [col for col in required_columns.keys() if col not in df.columns]
     if missing_columns:
         print(f"Error: Missing required columns in Excel: {', '.join(missing_columns)}")
         return
     
-    # Process data and create DataFrame for API
     print("Processing the data for creating JSON payload...")
     
     df1 = pd.DataFrame()
     total_records = len(df)
     
     for ii in range(total_records):
-        # Update progress
+
         os.system('cls')
         print(f"Processing Data: {ii+1} of {total_records} || {round(100 * (ii+1) / total_records, 1)}% complete")
-        
-        # Map columns
+
         for excel_col, api_col in required_columns.items():
             if excel_col == 'sdocode':
-                # Special handling for Billing_Unit
                 sdocode = str(df.loc[ii, 'sdocode'])
                 if len(sdocode) == 4:
                     df1.loc[ii, 'Billing_Unit'] = sdocode
@@ -141,37 +135,30 @@ def main():
                 else:
                     df1.loc[ii, 'Billing_Unit'] = sdocode.zfill(4)
             elif excel_col == 'survey_timings':
-                # Format date
                 df1.loc[ii, 'Replacement_Date'] = convert_date_format(df.loc[ii, 'survey_timings'])
             else:
                 df1.loc[ii, api_col] = str(df.loc[ii, excel_col])
         
-        # Add fixed values
         df1.loc[ii, 'AMISP_SMART_METER_APPLICATION_FEED_BY_MSEDCL_USER_FLAG_YN'] = 'N'
         df1.loc[ii, 'AMISP_SMART_METER_FLAG_YN'] = 'Y'
         df1.loc[ii, 'service_Type_ID'] = np.int64(9)
         df1.loc[ii, 'Current_Workflow_Status_ID'] = np.int64(33)
         df1.loc[ii, 'Remark'] = 'Manual L2, Excel Based'
-    
-    # Save processed data to shelve
+
     Data_Storage(1, 'L2_API_Data', df1)
     
     print("\nProcessing successfully completed. Press Enter to push data to API...")
     input()
     
-    # Prepare for API push
     df1 = Data_Storage(0, 'L2_API_Data', "")
     total_records = len(df1)
     lot_size = 100
     num_lots = math.ceil(total_records / lot_size)
     
-    # Add status columns to original DataFrame
     df['API_Status'] = ""
     
-    # Track overall status
     overall_status = pd.DataFrame(columns=['Total', 'Success', 'Fail'])
     
-    # Process in lots
     for lot in range(num_lots):
         start_idx = lot * lot_size
         end_idx = min((lot + 1) * lot_size, total_records)
@@ -187,12 +174,10 @@ def main():
             "ApplicationList": df1.iloc[start_idx:end_idx].to_dict('records')
         }
         
-        # Save payload JSON
         payload_filename = f"Output_{request_id}.json"
         with open(payload_filename, 'w') as f:
             json.dump(payload, f, indent=2)
         
-        # Push to API
         success, status, response_data = pushDataToL2API(payload, request_id)
         
         # # Save response JSON
@@ -201,7 +186,6 @@ def main():
         #     with open(response_filename, 'w') as f:
         #         json.dump(response_data, f, indent=2)
         
-        # Update status
         if success:
             success_count = current_lot_size
             fail_count = 0
@@ -209,24 +193,19 @@ def main():
             success_count = 0
             fail_count = current_lot_size
         
-        # Update overall status
         overall_status.loc[lot] = [current_lot_size, success_count, fail_count]
         
-        # Update original DataFrame with status
         for idx in range(start_idx, end_idx):
             original_idx = df.index[idx]
             df.loc[original_idx, 'API_Status'] = "Success" if success else "Failed"
             # df.loc[original_idx, 'API_Response'] = status
         
-        # Display current status
         print("\nCurrent Status:")
         print(overall_status)
         
-        # Wait before next lot (except for last one)
         if lot < num_lots - 1:
             time.sleep(20)
     
-    # Save final results
     timestamp = datetime.now().strftime("%d%m%Y")
     output_excel = f"L2_API_Results_{timestamp}.xlsx"
     df.to_excel(output_excel, index=False)
